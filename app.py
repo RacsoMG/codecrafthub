@@ -8,12 +8,27 @@ Run:   python app.py
 URL:   http://localhost:5000
 """
 
-from flask import Flask, jsonify, request
+from flask import Flask, jsonify, request, send_from_directory
 from datetime import datetime
 import json
 import os
 
 app = Flask(__name__)
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+
+
+# ----------------------------------------------------------------------------
+# CORS: allow the dashboard to call this API from another origin
+# (e.g. VS Code Live Server on port 5500 calling Flask on port 5000).
+# Without these headers the browser blocks the requests.
+# ----------------------------------------------------------------------------
+
+@app.after_request
+def add_cors_headers(response):
+    response.headers["Access-Control-Allow-Origin"] = "*"
+    response.headers["Access-Control-Allow-Methods"] = "GET, POST, PUT, DELETE, OPTIONS"
+    response.headers["Access-Control-Allow-Headers"] = "Content-Type"
+    return response
 
 # ----------------------------------------------------------------------------
 # CONFIGURATION
@@ -163,8 +178,18 @@ def home():
             "PUT /api/courses/<id>": "Update a course",
             "DELETE /api/courses/<id>": "Delete a course",
             "GET /api/courses/stats": "Course statistics by status",
+            "GET /dashboard": "Web dashboard (frontend)",
         },
     }), 200
+
+
+@app.route("/dashboard", methods=["GET"])
+def dashboard():
+    """Serve the frontend dashboard (dashboard.html) from the same server.
+
+    Handy alternative to Live Server: open http://localhost:5000/dashboard
+    """
+    return send_from_directory(BASE_DIR, "dashboard.html")
 
 
 @app.route("/api/courses", methods=["POST"])

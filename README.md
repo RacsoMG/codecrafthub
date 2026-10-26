@@ -16,12 +16,14 @@ It is designed for people learning REST APIs for the first time: there is **no d
 - Clear JSON error messages (missing fields, bad values, course not found, file errors)
 - **Bonus:** `GET /api/courses/stats` endpoint with course counts by status
 - Automated tests (`pytest`) and a curl test script
+- **Web dashboard** (`dashboard.html`): add, list, edit (modal), remove and filter courses from the browser
 
 ## 2. Project structure
 
 ```
 codecrafthub/
 ├── app.py            # The whole Flask application (routes, validation, storage)
+├── dashboard.html    # Frontend: CRUD dashboard (HTML + CSS + vanilla JS, one file)
 ├── courses.json      # Your data (created automatically - do not need to create it)
 ├── requirements.txt  # Python packages the project needs
 ├── test_app.py       # Automated tests (run with pytest)
@@ -89,6 +91,7 @@ All requests and responses use JSON. For `POST` and `PUT` always send the header
 | PUT | `/api/courses/<id>` | Update a course | 200 |
 | DELETE | `/api/courses/<id>` | Delete a course | 200 |
 | GET | `/api/courses/stats` | Statistics by status (bonus) | 200 |
+| GET | `/dashboard` | Serves the web dashboard | 200 |
 
 ### Course fields
 
@@ -192,7 +195,16 @@ Every error has the same shape: `{"success": false, "error": "<message>"}`.
 | Course does not exist | 404 | `Course with id 999 not found` |
 | `courses.json` unreadable / corrupted | 500 | `Data file is corrupted (invalid JSON): ...` |
 
-## 6. Testing
+## 6. Using the web dashboard
+
+`dashboard.html` is a single-file frontend (no frameworks) that calls the API for every CRUD operation. Start the backend first (`python app.py`), then open the dashboard in one of these ways:
+
+- **Live Server (VS Code / Cloud IDE):** right-click `dashboard.html` → *Open with Live Server*. It runs on another port (usually 5500) and calls the API on port 5000. The backend sends CORS headers, so the browser allows these calls.
+- **From Flask itself:** open `http://localhost:5000/dashboard`. Same origin, nothing else to set up.
+
+The dashboard finds the backend automatically: same origin when served by Flask, `http://localhost:5000` locally, or the `-5000` proxy address when it runs in a cloud lab (e.g. `https://you-5500.proxy...` → `https://you-5000.proxy...`). To force a URL, edit `API_BASE_URL` near the top of the `<script>`.
+
+## 7. Testing
 
 ### Option A — automated tests (no server needed)
 
@@ -220,7 +232,7 @@ Each line shows `PASS` or `FAIL`, the HTTP status, and the start of the response
 
 After adding a course, open `courses.json`: you will see the course saved there. Stop and restart the server, then run `curl http://localhost:5000/api/courses` — the data is still there.
 
-## 7. Troubleshooting
+## 8. Troubleshooting
 
 | Problem | Solution |
 |---|---|
@@ -231,3 +243,5 @@ After adding a course, open `courses.json`: you will see the course saved there.
 | curl JSON fails on Windows CMD | CMD does not accept single quotes. Use double quotes and escape the inner ones: `-d "{\"status\": \"Completed\"}"`, or use Git Bash / PowerShell. |
 | `Data file is corrupted` | `courses.json` was edited by hand and is not valid JSON. Fix it, or delete it (a new empty one is created automatically). |
 | 404 `Endpoint not found` | Check the URL: it is `/api/courses`, not `/courses`. |
+| Dashboard says "Cannot reach the backend" | Flask is not running, or it is on a different port. In a cloud lab, port 5000 must be running in a terminal. Or open the dashboard at `/dashboard` on port 5000 instead of using Live Server. |
+| Browser console shows a CORS error | You are running an older `app.py` without the `add_cors_headers` function. Update it and restart Flask. |
