@@ -1,0 +1,6 @@
+__pycache__/
+*.pyc
+.pytest_cache/
+venv/
+courses.json.tmp
+server.log
